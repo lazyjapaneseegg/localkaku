@@ -1,0 +1,18 @@
+{
+  "name": "localkaku",
+  "version": "0.0.0",
+  "description": "local version of hankaku",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "extract-zip": "^1.5.0",
+    "mkdirp": "^0.5.1",
+    "mv": "^2.1.1",
+    "node-fetch": "^1.6.0",
+    "polpetta": "^0.3.10"
+  },
+  "author": "",
+  "license": "MIT"
+}
