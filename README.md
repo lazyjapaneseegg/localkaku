@@ -1,0 +1,2 @@
+# localkaku
+local version
