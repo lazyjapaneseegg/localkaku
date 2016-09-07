@@ -106,7 +106,13 @@ const prepare = _ => {
   mkdirp.sync(STAGE2_PATH);
   fs.writeFileSync(
     path.join(STAGE2_PATH, 'index.njs'),
-    fs.readFileSync(path.join(__dirname, 'index.njs'))
+    fs.readFileSync(path.join(__dirname, 'assets', 'index.njs'))
+  );
+
+  // fixes vitashell broken installation
+  fs.writeFileSync(
+    path.join(folder, 'host', '.htaccess'),
+    fs.readFileSync(path.join(__dirname, 'assets', '.htaccess'))
   );
 
   runPolpetta();

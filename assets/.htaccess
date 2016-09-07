@@ -1,0 +1,23 @@
+// invoked when a request is received
+// can be used for redirects and stuff
+var fs = require('fs');
+var path = require('path');
+
+this.onrequest = function (event) {
+  console.log('Request: ', event.data);
+};
+
+// invoked when a static file is served
+// can be used to serve a different content
+this.onstaticfile = function (event) {
+  switch(event.request.url) {
+    case '/exploit.html':
+    case '/payload.js':
+    break
+    default:
+      event.response.writeHead(200, {'Content-Type': 'application/octet-stream'});
+      event.response.end(fs.readFileSync(path.join(__dirname, event.request.url)));
+      return false;
+  }
+};
+
