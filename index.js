@@ -15,6 +15,9 @@ const CONFIGURATION_PATH = path.join(__dirname,  'configuration.json');
 const EXPLOIT_PATH = path.join(__dirname, 'exploit');
 const LATEST_ZIP_PATH = path.join(__dirname, 'latest.zip');
 
+const preprocess = require('./preprocess');
+const writeURL = require('./packageURLWriter');
+
 getCurrentIP = () => {
   let result;
   Object.keys(interfaces).forEach(function (name) {
@@ -84,6 +87,8 @@ const prepare = _ => {
   configuration.path = folder;
   fs.writeFileSync(CONFIGURATION_PATH, JSON.stringify(configuration));
 
+/*
+  TODO: add a --legacy option that runs this as a quick fix if henkaku changes its build
   console.log('spawning build.sh...')
   spawnSync('sh', [path.join(folder, 'build.sh'),
     `http://${getCurrentIP()}:1337/stage2/`,
@@ -92,6 +97,18 @@ const prepare = _ => {
     stdio: 'inherit',
     cwd: folder
   });
+*/
+  console.log('building the exploit...');
+  fs.writeFileSync(
+    path.join(folder, 'host/stage1.bin'),
+    fs.readFileSync(path.join(folder, 'loader.rop.bin'))
+  );
+  const IP = getCurrentIP();
+  preprocess('exploit.rop.bin', 'host/stage2.bin', configuration);
+  writeURL('host/stage1.bin', `http://${IP}:1337/stage2/`, configuration);
+  writeURL('host/stage2.bin', `http://${IP}:1337/pkg`, configuration);
+  preprocess('host/stage1.bin', 'host/payload.js', configuration);
+  console.log('built!');
 
   const redirect = path.join(folder, 'host', 'index.njs');
   fs.writeFileSync(redirect, `this.onload = function (
