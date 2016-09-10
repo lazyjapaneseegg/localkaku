@@ -4,6 +4,7 @@ const argv = (
     .command('--reinstall', 'Use this to fetch and reinstall the latest version of henkaku')
     .command('--list-release', 'List all the releases')
     .command('--tag tag', 'download a specific release (tag)')
+    .command('--port port', 'use a specific port instead of 1337')
     .help().argv
 );
 
@@ -205,15 +206,16 @@ const main = _ => {
 const runPolpetta = _ => {
   const exploitPath = require('./configuration.json').path;
   const ip = getCurrentIP();
+  const port = argv.port || 1337
   console.log(`
     Navigate your PSVita to
     ================================
-    >>>>>> ${ip}:1337
+    >>>>>> ${ip}:${port}
     ================================
   `);
   const p = spawnSync('./node_modules/.bin/polpetta', [
     path.join(exploitPath, 'host'),
-    '0.0.0.0:1337'
+    `0.0.0.0:${port}`
   ], {
     stdio: 'inherit'
   })
