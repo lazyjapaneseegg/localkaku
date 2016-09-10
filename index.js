@@ -101,9 +101,12 @@ const patch = configuration => {
     fs.readFileSync(path.join(folder, 'loader.rop.bin'))
   );
   const IP = getCurrentIP();
+  const PORT = argv.port || 1337;
+  const ADDRESS = `http://${IP}:${PORT}`;
+
   preprocess('exploit.rop.bin', 'host/stage2.bin', configuration);
-  writeURL('host/stage1.bin', `http://${IP}:1337/stage2/`, configuration);
-  writeURL('host/stage2.bin', `http://${IP}:1337/pkg`, configuration);
+  writeURL('host/stage1.bin', `${ADDRESS}/stage2/`, configuration);
+  writeURL('host/stage2.bin', `${ADDRESS}/pkg`, configuration);
   preprocess('host/stage1.bin', 'host/payload.js', configuration);
   console.log('built!');
 }
@@ -115,9 +118,12 @@ const prepare = _ => {
   fs.writeFileSync(CONFIGURATION_PATH, JSON.stringify(configuration));
   if (argv.usePythonBuild) {
     console.log('spawning build.sh...')
+    const IP = getCurrentIP();
+    const PORT = argv.port || 1337;
+    const ADDRESS = `http://${IP}:${PORT}`;
     spawnSync('sh', [path.join(folder, 'build.sh'),
-      `http://${getCurrentIP()}:1337/stage2/`,
-      `http://${getCurrentIP()}:1337/pkg`
+      `http://${ADDRESS}/stage2/`,
+      `http://${ADDRESS}/pkg`
     ], {
       stdio: 'inherit',
       cwd: folder
