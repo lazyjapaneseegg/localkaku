@@ -2,8 +2,11 @@ const argv = (
   require('yargs')
     .command('--use-python-build', 'Use embedded build.sh shell script that invokes python to patch the rop, use this if newer version breaks (usually not needed).')
     .command('--reinstall', 'Use this to fetch and reinstall the latest version of henkaku')
+    .command('--list-release', 'List all the releases')
+    .command('--tag tag', 'download a specific release (tag)')
     .help().argv
 );
+
 const fetch = require('node-fetch');
 const fs = require('fs');
 const http = require('http');
@@ -67,7 +70,10 @@ getRealURLFromZipBallURI = url => {
   return `https://codeload.github.com/henkaku/henkaku/zip/${tag}`
 }
 
-getLatestVersion = () => {
+getLatestOrTaggedVersion = () => {
+  if (argv.tag) {
+    return Promise.resolve(getRealURLFromZipBallURI('/zipball/' + argv.tag));
+  }
   return fetch(
     'https://api.github.com/repos/henkaku/henkaku/releases/latest'
   ).then(
@@ -161,15 +167,38 @@ const unzipAndPrepare = _ => {
 }
 
 const main = _ => {
-  if(!fileExists(CONFIGURATION_PATH) || argv.reinstall) {
-    console.log('installing the exploit');
-    getLatestVersion().then(url => {
-      console.log(`downloading ${url}`);
-      downloadLatest(url).then(unzipAndPrepare);
-    })
+  if (argv.listRelease) {
+    fetch('https://api.github.com/repos/henkaku/henkaku/tags').then(
+      res => res.json().then(
+        tags => Promise.all(
+          tags.map(
+            tag => new Promise(
+              (ok, ko) => fetch(`https://api.github.com/repos/henkaku/henkaku/releases/tags/${tag.name}`).then(
+                res => res.json().then(releases => ok(releases))
+              )
+            )
+          )
+        )
+      ).then(releases => {
+        releases.forEach(release => {
+          console.log('====================\n');
+          console.log(`Version ${release.tag_name} (${release.published_at.substring(0,10)}):\n${release.body}`);
+          console.log('====================\n');
+        })
+
+      })
+    );
   } else {
-    patch(require(CONFIGURATION_PATH));
-    runPolpetta();
+    if (!fileExists(CONFIGURATION_PATH) || argv.reinstall) {
+      console.log('installing the exploit');
+      getLatestOrTaggedVersion().then(url => {
+        console.log(`downloading ${url}`);
+        downloadLatest(url).then(unzipAndPrepare);
+      })
+    } else {
+      patch(require(CONFIGURATION_PATH));
+      runPolpetta();
+    }
   }
 }
 
