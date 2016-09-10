@@ -1,6 +1,6 @@
 {
   "name": "localkaku",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "local version of hankaku",
   "main": "index.js",
   "scripts": {

@@ -5,6 +5,7 @@ const argv = (
     .command('--list-release', 'List all the releases')
     .command('--tag tag', 'download a specific release (tag)')
     .command('--port port', 'use a specific port instead of 1337')
+    .command('--address address', 'use a specific url to patch henkaku rops')
     .help().argv
 );
 
@@ -102,7 +103,7 @@ const patch = configuration => {
   );
   const IP = getCurrentIP();
   const PORT = argv.port || 1337;
-  const ADDRESS = `http://${IP}:${PORT}`;
+  const ADDRESS = argv.address || `http://${IP}:${PORT}`;
 
   preprocess('exploit.rop.bin', 'host/stage2.bin', configuration);
   writeURL('host/stage1.bin', `${ADDRESS}/stage2/`, configuration);
@@ -120,7 +121,7 @@ const prepare = _ => {
     console.log('spawning build.sh...')
     const IP = getCurrentIP();
     const PORT = argv.port || 1337;
-    const ADDRESS = `http://${IP}:${PORT}`;
+    const ADDRESS = argv.address || `http://${IP}:${PORT}`;
     spawnSync('sh', [path.join(folder, 'build.sh'),
       `http://${ADDRESS}/stage2/`,
       `http://${ADDRESS}/pkg`
