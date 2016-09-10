@@ -1,6 +1,6 @@
 {
   "name": "localkaku",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "local version of hankaku",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,9 @@
     "mkdirp": "^0.5.1",
     "mv": "^2.1.1",
     "node-fetch": "^1.6.0",
-    "polpetta": "^0.3.10"
+    "polpetta": "^0.3.10",
+    "rimraf": "^2.5.4",
+    "yargs": "^5.0.0"
   },
   "author": "",
   "license": "MIT"
