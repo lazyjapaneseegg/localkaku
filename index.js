@@ -1,3 +1,9 @@
+const argv = (
+  require('yargs')
+    .command('--use-python-build', 'Use embedded build.sh shell script that invokes python to patch the rop, use this if newer version breaks (usually not needed).')
+    .command('--reinstall', 'Use this to fetch and reinstall the latest version of henkaku')
+    .help().argv
+);
 const fetch = require('node-fetch');
 const fs = require('fs');
 const http = require('http');
@@ -9,6 +15,7 @@ const path = require('path');
 const extract = require('extract-zip')
 const url = require('url');
 const spawnSync = require('child_process').spawnSync;
+const rimraf = require('rimraf');
 
 const interfaces = os.networkInterfaces();
 const CONFIGURATION_PATH = path.join(__dirname,  'configuration.json');
@@ -79,26 +86,9 @@ fileExists = filePath => {
   };
   return result;
 }
-
-const prepare = _ => {
-
-  const folder = path.join(EXPLOIT_PATH, getDirectories(EXPLOIT_PATH)[0]);
-  const configuration = Object.create(null);
-  configuration.path = folder;
-  fs.writeFileSync(CONFIGURATION_PATH, JSON.stringify(configuration));
-
-/*
-  TODO: add a --legacy option that runs this as a quick fix if henkaku changes its build
-  console.log('spawning build.sh...')
-  spawnSync('sh', [path.join(folder, 'build.sh'),
-    `http://${getCurrentIP()}:1337/stage2/`,
-    `http://${getCurrentIP()}:1337/pkg`
-  ], {
-    stdio: 'inherit',
-    cwd: folder
-  });
-*/
+const patch = configuration => {
   console.log('building the exploit...');
+  const folder = configuration.path;
   fs.writeFileSync(
     path.join(folder, 'host/stage1.bin'),
     fs.readFileSync(path.join(folder, 'loader.rop.bin'))
@@ -109,6 +99,25 @@ const prepare = _ => {
   writeURL('host/stage2.bin', `http://${IP}:1337/pkg`, configuration);
   preprocess('host/stage1.bin', 'host/payload.js', configuration);
   console.log('built!');
+}
+const prepare = _ => {
+
+  const folder = path.join(EXPLOIT_PATH, getDirectories(EXPLOIT_PATH)[0]);
+  const configuration = Object.create(null);
+  configuration.path = folder;
+  fs.writeFileSync(CONFIGURATION_PATH, JSON.stringify(configuration));
+  if (argv.usePythonBuild) {
+    console.log('spawning build.sh...')
+    spawnSync('sh', [path.join(folder, 'build.sh'),
+      `http://${getCurrentIP()}:1337/stage2/`,
+      `http://${getCurrentIP()}:1337/pkg`
+    ], {
+      stdio: 'inherit',
+      cwd: folder
+    });
+  } else {
+    patch(configuration);
+  }
 
   const redirect = path.join(folder, 'host', 'index.njs');
   fs.writeFileSync(redirect, `this.onload = function (
@@ -136,6 +145,11 @@ const prepare = _ => {
 }
 
 const unzipAndPrepare = _ => {
+  try {
+    rimraf.sync(EXPLOIT_PATH);
+  } catch (e) {
+    //ignore...
+  }
   mkdirp.sync(EXPLOIT_PATH);
     extract(LATEST_ZIP_PATH, {dir: EXPLOIT_PATH}, err => {
       if (err) {
@@ -147,13 +161,14 @@ const unzipAndPrepare = _ => {
 }
 
 const main = _ => {
-  if(!fileExists(CONFIGURATION_PATH)) {
+  if(!fileExists(CONFIGURATION_PATH) || argv.reinstall) {
     console.log('installing the exploit');
     getLatestVersion().then(url => {
       console.log(`downloading ${url}`);
       downloadLatest(url).then(unzipAndPrepare);
     })
   } else {
+    patch(require(CONFIGURATION_PATH));
     runPolpetta();
   }
 }

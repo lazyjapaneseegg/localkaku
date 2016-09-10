@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = (input, output, configuration) => {
-//module.exports = (input = 'host/stage1.bin', output = 'host/payload.js') => {
   const ROP_PATH =  path.join(configuration.path, input);
 
   const buffer = fs.readFileSync(ROP_PATH);
@@ -31,30 +30,30 @@ module.exports = (input, output, configuration) => {
   for (let x = 0; x < symbolTableEntriesCount; x++) {
     let
       type = buffer.readUInt32LE(symbolTable + 8 * x),
-		  typeDescriptionOffset = buffer.readUInt32LE(symbolTable + 8 * x + 4),
-		  begin = typeDescriptionOffset,
-		  end = typeDescriptionOffset;
-  	while (buffer.readUInt8(end) != 0) end ++;
-  	let name = getASCIIfromBuffer({buffer, begin, end});
-  	relocationTypes[type] = name
+      typeDescriptionOffset = buffer.readUInt32LE(symbolTable + 8 * x + 4),
+      begin = typeDescriptionOffset,
+      end = typeDescriptionOffset;
+    while (buffer.readUInt8(end) != 0) end ++;
+    let name = getASCIIfromBuffer({buffer, begin, end});
+    relocationTypes[type] = name
   }
 
   const reloc_type_map = {
-		"rop.data": 1,       // dest += rop_data_base
-		"SceWebKit": 2,      // dest += SceWebKit_base
-		"SceLibKernel": 3,   // dest += SceLibKernel_base
-		"SceLibc": 4,        // dest += SceLibc_base
-		"SceLibHttp": 5,     // dest += SceLibHttp_base
-		"SceNet": 6,         // dest += SceNet_base
-		"SceAppMgr": 7,      // dest += SceAppMgr_base
-	},
+    "rop.data": 1,       // dest += rop_data_base
+    "SceWebKit": 2,      // dest += SceWebKit_base
+    "SceLibKernel": 3,   // dest += SceLibKernel_base
+    "SceLibc": 4,        // dest += SceLibc_base
+    "SceLibHttp": 5,     // dest += SceLibHttp_base
+    "SceNet": 6,         // dest += SceNet_base
+    "SceAppMgr": 7,      // dest += SceAppMgr_base
+  },
   want_len = 0x40 + dataSize + codeSize,
   relocs = Array.from(Array(Math.floor(want_len / 4)), _ => 0);
   for (let x = 0, max = Math.floor(relocationSize / 8); x < max; x++){
 
     let reloc_type = buffer.readUInt16LE(relocationOffset + 8 * x),
-		    type = buffer.readUInt16LE(relocationOffset + 8 * x + 2),
-		    offset = buffer.readUInt32LE(relocationOffset + 8 * x + 4),
+        type = buffer.readUInt16LE(relocationOffset + 8 * x + 2),
+        offset = buffer.readUInt32LE(relocationOffset + 8 * x + 4),
         wk_reloc_type = reloc_type_map[relocationTypes[type]]
 
         relocs[Math.floor(offset / 4)] = wk_reloc_type
